@@ -1,0 +1,126 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  firstName    String   @map("first_name") @db.VarChar(255)
+  middleName   String?  @map("middle_name") @db.VarChar(255)
+  lastName     String   @map("last_name") @db.VarChar(255)
+  mobile       String   @db.VarChar(25)
+  email        String   @unique @db.VarChar(255)
+  passwordHash String   @map("password_hash") @db.VarChar(255)
+  intro        String?  @db.Text
+  profile      String?  @db.Text
+  registerAt   DateTime @default(now()) @map("register_at") @db.Timestamp(0)
+  lastLogin    DateTime @default(now()) @map("last_login") @db.Timestamp(0)
+
+  posts Post[]
+
+  @@map("users")
+}
+
+model Category {
+  id        BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  parentId  BigInt @map("parent_id") @db.UnsignedBigInt
+  title     String @db.VarChar(255)
+  metaTitle  String?  @map("meta_title") @db.VarChar(255)
+  slug      String @db.VarChar(255)
+  content    String?  @db.Text
+
+  postCategories PostCategory[]
+
+  @@map("categories")
+}
+
+
+
+model Post {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  authorId    BigInt   @map("author_id") @db.UnsignedBigInt
+  parentId    BigInt   @map("parent_id") @db.UnsignedBigInt
+  title       String   @db.VarChar(255)
+  metaTitle    String?  @map("meta_title") @db.VarChar(255)
+  slug        String   @db.VarChar(255)
+  summary      String?  @db.VarChar(255)
+  content     String   @db.Text
+  published   Int      @db.TinyInt()
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(0)
+  publishedAt DateTime @default(now()) @map("published_at") @db.Timestamp(0)
+
+  postComments   PostComment[]
+  postCategories PostCategory[]
+  postTags       PostTag[]
+  postMeta       PostMeta[]
+
+  users User @relation(fields: [authorId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("posts")
+}
+model Tag {
+  id        BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  title     String @db.VarChar(255)
+  metaTitle String @map("meta_title") @db.VarChar(255)
+  slug      String @db.VarChar(255)
+  content   String @db.Text
+  postTags PostTag[]
+
+  @@map("tags")
+}
+model PostComment {
+  id          BigInt   @id @default(autoincrement()) @db.UnsignedBigInt
+  postId      BigInt   @map("post_id") @db.UnsignedBigInt
+  parentId    BigInt   @map("parent_id") @db.UnsignedBigInt
+  title       String   @db.VarChar(255)
+  content     String   @db.Text
+  published   Int      @db.TinyInt
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamp(0)
+  publishedAt DateTime @default(now()) @map("published_at") @db.Timestamp(0)
+
+  posts Post @relation(fields: [postId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("post_comments")
+}
+
+model PostCategory {
+  id         BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  postId     BigInt @map("post_id") @db.UnsignedBigInt
+  categoryId BigInt @map("category_id") @db.UnsignedBigInt
+
+  posts      Post     @relation(fields: [postId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  categories Category @relation(fields: [categoryId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("post_categories")
+}
+
+
+model PostMeta {
+  id      BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  postId  BigInt @map("post_id") @db.UnsignedBigInt
+  key     String @db.VarChar(255)
+  content String @db.Text
+
+  posts Post @relation(fields: [postId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("post_meta")
+}
+model PostTag {
+  id     BigInt @id @default(autoincrement()) @db.UnsignedBigInt
+  postId BigInt @map("post_id") @db.UnsignedBigInt
+  tagId  BigInt @map("tag_id") @db.UnsignedBigInt
+
+  posts Post @relation(fields: [postId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  Tags Tag @relation(fields: [tagId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@map("post_tags")
+}
